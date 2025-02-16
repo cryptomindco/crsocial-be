@@ -38,7 +38,7 @@ func (a *apiFileUpload) uploadOneFile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = ioutil.WriteFile(utils.GetImagePath()+"\\"+newImageName, fileBytes, 0777)
+	err = ioutil.WriteFile(utils.GetImagePath()+"/"+newImageName, fileBytes, 0777)
 	if err != nil {
 		fmt.Println("Write file error")
 	}
@@ -71,7 +71,7 @@ func (a *apiFileUpload) uploadFiles(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Println(err)
 		}
-		err = ioutil.WriteFile(utils.GetImagePath()+"\\"+newImageNameArr[i], fileBytes, 0777)
+		err = ioutil.WriteFile(utils.GetImagePath()+"/"+newImageNameArr[i], fileBytes, 0777)
 		if err != nil {
 			fmt.Println("Write file error")
 		}

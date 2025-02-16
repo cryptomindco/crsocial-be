@@ -15,7 +15,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -124,17 +123,16 @@ func ImageToBase64(img image.Image) (string, error) {
 	return imgBase64Str, nil
 }
 
-var imagePath = getBinPath() + "\\upload\\images"
-var videoPath = getBinPath() + "\\upload\\videos"
-var otherPath = getBinPath() + "\\upload\\other"
+var imagePath = getBinPath() + "/upload/images"
+var videoPath = getBinPath() + "/upload/videos"
+var otherPath = getBinPath() + "/upload/other"
 
 func getBinPath() string {
-	e, err := os.Executable()
+	e, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	path := path.Dir(e)
-	return path
+	return e
 }
 
 func GetImagePath() string {
@@ -174,7 +172,7 @@ func GetConvertFilename(uploadDir string, fileName string) string {
 }
 
 func CheckFileExist(dir, fileName string) bool {
-	_, err := os.Stat(fmt.Sprintf("%s\\%s", dir, fileName))
+	_, err := os.Stat(fmt.Sprintf("%s/%s", dir, fileName))
 	return !os.IsNotExist(err)
 }
 
@@ -206,7 +204,7 @@ func ConvertUrlArray(siteRoot string, urlArray []string) []string {
 }
 
 func ConvertToSiteUrl(siteRoot, fileUrl string) string {
-	uploadPrefix := "\\upload"
+	uploadPrefix := "/upload"
 	pos := strings.Index(fileUrl, uploadPrefix)
 	if pos > -1 {
 		fileUrl = fileUrl[pos:]
@@ -214,7 +212,6 @@ func ConvertToSiteUrl(siteRoot, fileUrl string) string {
 		return "#"
 	}
 	result := fmt.Sprintf("%s%s", siteRoot, fileUrl)
-	result = strings.ReplaceAll(result, "\\", "/")
 	return result
 }
 
@@ -227,7 +224,7 @@ func IsImageFileType(fileMainType string) bool {
 }
 
 func ConvertImageToBase64(fileName string) string {
-	imgFile, err := os.Open(imagePath + "\\" + fileName) //Image file
+	imgFile, err := os.Open(imagePath + "/" + fileName) //Image file
 
 	if err != nil {
 		log.Println(err)

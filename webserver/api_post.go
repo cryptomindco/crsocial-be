@@ -42,7 +42,7 @@ func (a *apiPost) PostWithFiles(w http.ResponseWriter, r *http.Request) {
 			utils.Response(w, http.StatusInternalServerError, err, nil)
 			return
 		}
-		newFileUpload := uploadDir + "\\" + utils.GetConvertFilename(uploadDir, handler.Filename)
+		newFileUpload := uploadDir + "/" + utils.GetConvertFilename(uploadDir, handler.Filename)
 		err = ioutil.WriteFile(newFileUpload, fileBytes, 0777)
 		if err != nil {
 			fmt.Println("Write file error")

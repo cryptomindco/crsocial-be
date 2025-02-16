@@ -202,7 +202,7 @@ func (a *apiUser) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uploadDir := utils.GetImagePath()
-	newFileUpload := uploadDir + "\\" + utils.GetConvertFilename(uploadDir, handler.Filename)
+	newFileUpload := uploadDir + "/" + utils.GetConvertFilename(uploadDir, handler.Filename)
 	err = ioutil.WriteFile(newFileUpload, fileBytes, 0777)
 	if err != nil {
 		fmt.Println("Write file error")
