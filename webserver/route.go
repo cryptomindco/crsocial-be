@@ -46,8 +46,9 @@ func (s *WebServer) Route() {
 			r.Use(s.loggedInMiddleware)
 			r.Post("/update-display-name", userRouter.updateDisplayName)
 			r.Post("/update-bio", userRouter.updateBio)
-			r.Post("/update-avatar", userRouter.UpdateAvatar)
+			r.Post("/update-full-profile", userRouter.updateFullProfile)
 			r.Post("/follow-user", userRouter.FollowUpdateUser)
+			r.Post("/update-profile-info", userRouter.updateProfileInfo)
 		})
 		r.Route("/public", func(r chi.Router) {
 			var userRouter = apiUser{WebServer: s}

@@ -182,13 +182,15 @@ func (a *apiUser) updateDisplayName(w http.ResponseWriter, r *http.Request) {
 	utils.ResponseOK(w, userInfo)
 }
 
-func (a *apiUser) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
+func (a *apiUser) updateFullProfile(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20)
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		utils.Response(w, http.StatusBadRequest, err, nil)
 		return
 	}
+	var fullName = r.Form.Get("fullName")
+	var bio = r.Form.Get("bio")
 	defer file.Close()
 	err = os.MkdirAll(utils.GetImagePath(), os.ModePerm)
 	if err != nil {
@@ -216,6 +218,31 @@ func (a *apiUser) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userInfo.Avatar = utils.ConvertToSiteUrl(a.conf.SiteRoot, newFileUpload)
+	userInfo.FullName = fullName
+	userInfo.Bio = bio
+	err = a.db.UpdateUserInfo(userInfo)
+	if err != nil {
+		utils.Response(w, http.StatusInternalServerError, err, nil)
+		return
+	}
+	utils.ResponseOK(w, userInfo)
+}
+
+func (a *apiUser) updateProfileInfo(w http.ResponseWriter, r *http.Request) {
+	var f portal.UpdateUserInfoRequest
+	err := a.parseJSONAndValidate(r, &f)
+	if err != nil {
+		utils.Response(w, http.StatusBadRequest, err, nil)
+		return
+	}
+	claims, _ := a.credentialsInfo(r)
+	userInfo, err := a.service.GetUserInfoByUsername(claims.UserName)
+	if err != nil {
+		utils.Response(w, http.StatusInternalServerError, err, nil)
+		return
+	}
+	userInfo.Bio = f.Bio
+	userInfo.FullName = f.FullName
 	err = a.db.UpdateUserInfo(userInfo)
 	if err != nil {
 		utils.Response(w, http.StatusInternalServerError, err, nil)
