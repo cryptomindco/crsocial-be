@@ -273,11 +273,6 @@ func (a *apiAuth) FinishPasskeyTransferRegister(w http.ResponseWriter, r *http.R
 
 func (a *apiAuth) FinishPasskeyRegister(w http.ResponseWriter, r *http.Request) {
 	sessionKey := r.FormValue("sessionKey")
-	email := r.FormValue("email")
-	if utils.IsEmpty(email) {
-		utils.Response(w, http.StatusInternalServerError, fmt.Errorf("get email failed"), nil)
-		return
-	}
 	res, err := a.service.FinishRegistrationHandler(r.Context(), &authpb.SessionKeyAndHttpRequest{
 		SessionKey: sessionKey,
 		Request: &authpb.HttpRequest{
