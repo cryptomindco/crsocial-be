@@ -63,7 +63,7 @@ func (s *Service) GetAllPost(limit int) ([]storage.Post, error) {
 
 func (s *Service) GetPostOfFollowing(username string) ([]storage.Post, error) {
 	var posts []storage.Post
-	query := fmt.Sprintf(`SELECT * FROM posts WHERE username IN (SELECT target FROM followers WHERE follower = '%s') ORDER BY created_at desc`, username)
+	query := fmt.Sprintf(`SELECT * FROM posts WHERE username IN (SELECT target FROM followers WHERE follower = '%s' AND status) ORDER BY created_at desc`, username)
 	err := s.db.Raw(query).Scan(&posts).Error
 	if err != nil {
 		return make([]storage.Post, 0), err
