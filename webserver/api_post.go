@@ -5,9 +5,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"socialat/be/storage"
 	"socialat/be/utils"
 	"socialat/be/webserver/portal"
 	"strconv"
+	"time"
 )
 
 type apiPost struct {
@@ -62,6 +64,55 @@ func (a *apiPost) PostWithFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.ResponseOK(w, Map{})
+}
+
+func (a *apiPost) likePost(w http.ResponseWriter, r *http.Request) {
+	var f portal.PostRequest
+	err := a.parseJSONAndValidate(r, &f)
+	if err != nil {
+		utils.Response(w, http.StatusBadRequest, err, nil)
+		return
+	}
+	claims, _ := a.credentialsInfo(r)
+	isLiked, err := a.service.CheckLoginLiked(claims.UserName, f.Id)
+	if err != nil {
+		utils.Response(w, http.StatusInternalServerError, err, nil)
+		return
+	}
+	var post storage.Post
+	err = a.db.GetById(f.Id, &post)
+	if err != nil {
+		utils.Response(w, http.StatusInternalServerError, err, nil)
+		return
+	}
+	if !isLiked {
+		err = a.db.CreateLike(&storage.Like{
+			Username: claims.UserName,
+			PostId:   f.Id,
+			LikedAt:  time.Now(),
+		})
+		if err != nil {
+			utils.Response(w, http.StatusInternalServerError, err, nil)
+			return
+		}
+		post.LikeCount++
+	} else {
+		tx := a.db.GetDB().Begin()
+		if err := tx.Where("username = ? AND post_id = ?", claims.UserName, f.Id).Delete(storage.Like{}).Error; err != nil {
+			tx.Rollback()
+			utils.Response(w, http.StatusInternalServerError, err, nil)
+			return
+		}
+		tx.Commit()
+		post.LikeCount--
+	}
+	// update post
+	err = a.db.UpdatePost(&post)
+	if err != nil {
+		utils.Response(w, http.StatusInternalServerError, err, nil)
+		return
+	}
+	utils.ResponseOK(w, !isLiked)
 }
 
 func (a *apiPost) PostWithoutFiles(w http.ResponseWriter, r *http.Request) {

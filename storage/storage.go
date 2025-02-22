@@ -22,6 +22,8 @@ type Storage interface {
 	UserInfoStorage
 	PostStorage
 	FollowerStorage
+	LikeStorage
+	CommentStorage
 }
 
 type DeleteFilter interface {

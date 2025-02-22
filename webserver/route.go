@@ -73,6 +73,7 @@ func (s *WebServer) Route() {
 			r.Post("/upload-images", postRouter.uploadImages)
 			r.Post("/post-with-files", postRouter.PostWithFiles)
 			r.Post("/post-without-files", postRouter.PostWithoutFiles)
+			r.Post("/like-post", postRouter.likePost)
 		})
 	})
 }

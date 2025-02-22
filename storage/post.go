@@ -48,6 +48,7 @@ type PostView struct {
 	*Post
 	ImageUrls []string `json:"imageUrls"`
 	Author    *Author  `json:"author"`
+	Liked     bool     `json:"liked"`
 }
 
 type PostFilter struct {

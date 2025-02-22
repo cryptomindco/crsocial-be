@@ -19,9 +19,9 @@ type apiUser struct {
 
 func (a *apiUser) getUserPosts(w http.ResponseWriter, r *http.Request) {
 	username := chi.URLParam(r, "username")
+	claims, _ := a.credentialsInfo(r)
 	var author storage.Author
 	if username == "-1" {
-		claims, _ := a.credentialsInfo(r)
 		author = storage.Author{
 			Username: claims.UserName,
 			FullName: claims.FullName,
@@ -55,7 +55,7 @@ func (a *apiUser) getUserPosts(w http.ResponseWriter, r *http.Request) {
 		}
 		postViews = append(postViews, postView)
 	}
-	postViews = storage.HandlerPostFileUrls(a.conf.SiteRoot, postViews)
+	postViews = a.service.HandleForPost(a.conf.SiteRoot, claims.UserName, postViews)
 	utils.ResponseOK(w, Map{
 		"posts": postViews,
 	})
@@ -64,6 +64,7 @@ func (a *apiUser) getUserPosts(w http.ResponseWriter, r *http.Request) {
 func (a *apiUser) getAllPosts(w http.ResponseWriter, r *http.Request) {
 	var posts = make([]storage.Post, 0)
 	posts, _ = a.service.GetAllPost(40)
+	claims, _ := a.credentialsInfo(r)
 	postViews := make([]storage.PostView, 0)
 	authorMap := make(map[string]storage.Author)
 	for _, post := range posts {
@@ -85,7 +86,7 @@ func (a *apiUser) getAllPosts(w http.ResponseWriter, r *http.Request) {
 		}
 		postViews = append(postViews, postView)
 	}
-	postViews = storage.HandlerPostFileUrls(a.conf.SiteRoot, postViews)
+	postViews = a.service.HandleForPost(a.conf.SiteRoot, claims.UserName, postViews)
 	utils.ResponseOK(w, Map{
 		"posts": postViews,
 	})
@@ -118,7 +119,7 @@ func (a *apiUser) getTimelines(w http.ResponseWriter, r *http.Request) {
 		}
 		postViews = append(postViews, postView)
 	}
-	postViews = storage.HandlerPostFileUrls(a.conf.SiteRoot, postViews)
+	postViews = a.service.HandleForPost(a.conf.SiteRoot, claims.UserName, postViews)
 	utils.ResponseOK(w, Map{
 		"posts": postViews,
 	})

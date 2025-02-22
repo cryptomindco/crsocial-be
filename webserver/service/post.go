@@ -70,3 +70,27 @@ func (s *Service) GetPostOfFollowing(username string) ([]storage.Post, error) {
 	}
 	return posts, nil
 }
+
+func (s *Service) HandleForPost(siteRoot, loginUser string, postViews []storage.PostView) []storage.PostView {
+	postViews = storage.HandlerPostFileUrls(siteRoot, postViews)
+	if utils.IsEmpty(loginUser) {
+		return postViews
+	}
+	// check like
+	for index, postView := range postViews {
+		liked, _ := s.CheckLoginLiked(loginUser, postView.Id)
+		postView.Liked = liked
+		postViews[index] = postView
+	}
+	return postViews
+}
+
+func (s *Service) CheckLoginLiked(username string, postId uint64) (bool, error) {
+	var liked bool
+	query := fmt.Sprintf(`SELECT EXISTS(SELECT 1 FROM likes WHERE username = '%s' AND post_id = %d)`, username, postId)
+	err := s.db.Raw(query).Scan(&liked).Error
+	if err != nil {
+		return false, err
+	}
+	return liked, nil
+}
