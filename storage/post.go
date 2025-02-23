@@ -54,9 +54,10 @@ type Author struct {
 
 type PostView struct {
 	*Post
-	ImageUrls []string `json:"imageUrls"`
-	Author    *Author  `json:"author"`
-	Liked     bool     `json:"liked"`
+	ImageUrls []string       `json:"imageUrls"`
+	Comments  []*CommentView `json:"comments"`
+	Author    *Author        `json:"author"`
+	Liked     bool           `json:"liked"`
 }
 
 type PostFilter struct {

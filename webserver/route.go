@@ -49,15 +49,17 @@ func (s *WebServer) Route() {
 			r.Post("/update-full-profile", userRouter.updateFullProfile)
 			r.Post("/follow-user", userRouter.FollowUpdateUser)
 			r.Post("/update-profile-info", userRouter.updateProfileInfo)
+			r.Post("/like-handle", userRouter.likeHandle)
+			r.Post("/reply", userRouter.reply)
 		})
 		r.Route("/public", func(r chi.Router) {
-			var userRouter = apiUser{WebServer: s}
+			var publicRouter = apiPublic{WebServer: s}
 			r.Use(s.getLoginInfoMiddleware)
-			r.Get("/get-user-by-name/{username}", userRouter.getUserByName)
-			r.Get("/get-timelines", userRouter.getTimelines)
-			r.Get("/get-all-posts", userRouter.getAllPosts)
-			r.Get("/get-post-detail/{id}", userRouter.getPostDetail)
-			r.Get("/get-user-posts/{username}", userRouter.getUserPosts)
+			r.Get("/get-user-by-name/{username}", publicRouter.getUserByName)
+			r.Get("/get-timelines", publicRouter.getTimelines)
+			r.Get("/get-all-posts", publicRouter.getAllPosts)
+			r.Get("/get-post-detail/{id}", publicRouter.getPostDetail)
+			r.Get("/get-user-posts/{username}", publicRouter.getUserPosts)
 		})
 		r.Route("/file", func(r chi.Router) {
 			r.Use(s.loggedInMiddleware)
@@ -74,7 +76,6 @@ func (s *WebServer) Route() {
 			r.Post("/upload-images", postRouter.uploadImages)
 			r.Post("/post-with-files", postRouter.PostWithFiles)
 			r.Post("/post-without-files", postRouter.PostWithoutFiles)
-			r.Post("/like-post", postRouter.likePost)
 		})
 	})
 }

@@ -37,6 +37,24 @@ func (s *Service) CreateNewPost(userId uint64, username string, postContent stri
 	return &post, nil
 }
 
+func (s *Service) UpdatePostLikeCount(postId uint32, liked bool) error {
+	var post storage.Post
+	err := s.db.First(&post, postId).Error
+	if err != nil {
+		return err
+	}
+	if liked {
+		post.LikeCount++
+	} else {
+		post.LikeCount--
+	}
+	err = s.db.Save(&post).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *Service) GetAuthorByUsername(username string) (*storage.Author, error) {
 	userInfo, err := s.GetUserInfoByUsername(username)
 	if err != nil {
@@ -91,7 +109,7 @@ func (s *Service) HandleForPostList(siteRoot, loginUser string, postViews []stor
 	}
 	// check like
 	for index, postView := range postViews {
-		liked, _ := s.CheckLoginLiked(loginUser, postView.Id)
+		liked, _ := s.CheckLoginLiked(loginUser, postView.Id, int(utils.PostType))
 		postView.Liked = liked
 		postViews[index] = postView
 	}
@@ -104,14 +122,14 @@ func (s *Service) HandleForPost(siteRoot, loginUser string, postView storage.Pos
 		return postView
 	}
 	// check like
-	liked, _ := s.CheckLoginLiked(loginUser, postView.Id)
+	liked, _ := s.CheckLoginLiked(loginUser, postView.Id, int(utils.PostType))
 	postView.Liked = liked
 	return postView
 }
 
-func (s *Service) CheckLoginLiked(username string, postId uint64) (bool, error) {
+func (s *Service) CheckLoginLiked(username string, targetId uint64, likeType int) (bool, error) {
 	var liked bool
-	query := fmt.Sprintf(`SELECT EXISTS(SELECT 1 FROM likes WHERE username = '%s' AND post_id = %d)`, username, postId)
+	query := fmt.Sprintf(`SELECT EXISTS(SELECT 1 FROM likes WHERE username = '%s' AND target_id = %d AND type = %d)`, username, targetId, likeType)
 	err := s.db.Raw(query).Scan(&liked).Error
 	if err != nil {
 		return false, err

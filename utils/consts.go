@@ -23,10 +23,16 @@ type ResponseData struct {
 
 type UserRole int
 type FollowStatus uint
+type LikeType int
 
 const (
 	UserRoleNone UserRole = iota
 	UserRoleAdmin
+)
+
+const (
+	PostType LikeType = iota
+	CommentType
 )
 
 const (
