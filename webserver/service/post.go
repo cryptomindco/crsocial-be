@@ -37,6 +37,19 @@ func (s *Service) CreateNewPost(userId uint64, username string, postContent stri
 	return &post, nil
 }
 
+func (s *Service) GetAuthorByUsername(username string) (*storage.Author, error) {
+	userInfo, err := s.GetUserInfoByUsername(username)
+	if err != nil {
+		return nil, err
+	}
+	author := storage.Author{
+		Username: userInfo.Username,
+		FullName: userInfo.FullName,
+		Avatar:   userInfo.Avatar,
+	}
+	return &author, nil
+}
+
 func (s *Service) GetPostListByUsername(username string) ([]storage.Post, error) {
 	var posts []storage.Post
 	if err := s.db.Where("username = ?", username).Order("created_at desc").Find(&posts).Error; err != nil {
@@ -71,7 +84,7 @@ func (s *Service) GetPostOfFollowing(username string) ([]storage.Post, error) {
 	return posts, nil
 }
 
-func (s *Service) HandleForPost(siteRoot, loginUser string, postViews []storage.PostView) []storage.PostView {
+func (s *Service) HandleForPostList(siteRoot, loginUser string, postViews []storage.PostView) []storage.PostView {
 	postViews = storage.HandlerPostFileUrls(siteRoot, postViews)
 	if utils.IsEmpty(loginUser) {
 		return postViews
@@ -83,6 +96,17 @@ func (s *Service) HandleForPost(siteRoot, loginUser string, postViews []storage.
 		postViews[index] = postView
 	}
 	return postViews
+}
+
+func (s *Service) HandleForPost(siteRoot, loginUser string, postView storage.PostView) storage.PostView {
+	postView = storage.HandlerOnePostFileUrls(siteRoot, postView)
+	if utils.IsEmpty(loginUser) {
+		return postView
+	}
+	// check like
+	liked, _ := s.CheckLoginLiked(loginUser, postView.Id)
+	postView.Liked = liked
+	return postView
 }
 
 func (s *Service) CheckLoginLiked(username string, postId uint64) (bool, error) {

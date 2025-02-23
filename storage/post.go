@@ -38,6 +38,14 @@ func HandlerPostFileUrls(siteRoot string, posts []PostView) []PostView {
 	return posts
 }
 
+func HandlerOnePostFileUrls(siteRoot string, post PostView) PostView {
+	if !utils.IsEmpty(post.ImageUrl) {
+		urlArr := strings.Split(post.ImageUrl, utils.FileSeparate)
+		post.ImageUrls = urlArr
+	}
+	return post
+}
+
 type Author struct {
 	Username string `json:"username"`
 	FullName string `json:"fullName"`

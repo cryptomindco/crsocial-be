@@ -8,6 +8,7 @@ import (
 	"socialat/be/storage"
 	"socialat/be/utils"
 	"socialat/be/webserver/portal"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -20,9 +21,9 @@ type apiUser struct {
 func (a *apiUser) getUserPosts(w http.ResponseWriter, r *http.Request) {
 	username := chi.URLParam(r, "username")
 	claims, _ := a.credentialsInfo(r)
-	var author storage.Author
+	var author *storage.Author
 	if username == "-1" {
-		author = storage.Author{
+		author = &storage.Author{
 			Username: claims.UserName,
 			FullName: claims.FullName,
 			Avatar:   claims.Avatar,
@@ -31,15 +32,10 @@ func (a *apiUser) getUserPosts(w http.ResponseWriter, r *http.Request) {
 	} else {
 		var err error
 		// get user by id
-		userInfo, err := a.service.GetUserInfoByUsername(username)
+		author, err = a.service.GetAuthorByUsername(username)
 		if err != nil {
 			utils.Response(w, http.StatusInternalServerError, err, nil)
 			return
-		}
-		author = storage.Author{
-			Username: userInfo.Username,
-			FullName: userInfo.FullName,
-			Avatar:   userInfo.Avatar,
 		}
 	}
 	posts, err := a.service.GetPostListByUsername(username)
@@ -51,14 +47,42 @@ func (a *apiUser) getUserPosts(w http.ResponseWriter, r *http.Request) {
 	for _, post := range posts {
 		postView := storage.PostView{
 			Post:   &post,
-			Author: &author,
+			Author: author,
 		}
 		postViews = append(postViews, postView)
 	}
-	postViews = a.service.HandleForPost(a.conf.SiteRoot, claims.UserName, postViews)
+	postViews = a.service.HandleForPostList(a.conf.SiteRoot, claims.UserName, postViews)
 	utils.ResponseOK(w, Map{
 		"posts": postViews,
 	})
+}
+
+func (a *apiUser) getPostDetail(w http.ResponseWriter, r *http.Request) {
+	postIdStr := chi.URLParam(r, "id")
+	postId, err := strconv.ParseUint(postIdStr, 0, 32)
+	if err != nil {
+		utils.Response(w, http.StatusBadRequest, err, nil)
+		return
+	}
+	// Get Post
+	var post storage.Post
+	err = a.db.GetById(postId, &post)
+	if err != nil {
+		utils.Response(w, http.StatusInternalServerError, err, nil)
+		return
+	}
+	author, err := a.service.GetAuthorByUsername(post.Username)
+	if err != nil {
+		utils.Response(w, http.StatusInternalServerError, err, nil)
+		return
+	}
+	postView := storage.PostView{
+		Post:   &post,
+		Author: author,
+	}
+	claims, _ := a.credentialsInfo(r)
+	postView = a.service.HandleForPost(a.conf.SiteRoot, claims.UserName, postView)
+	utils.ResponseOK(w, postView)
 }
 
 func (a *apiUser) getAllPosts(w http.ResponseWriter, r *http.Request) {
@@ -66,27 +90,23 @@ func (a *apiUser) getAllPosts(w http.ResponseWriter, r *http.Request) {
 	posts, _ = a.service.GetAllPost(40)
 	claims, _ := a.credentialsInfo(r)
 	postViews := make([]storage.PostView, 0)
-	authorMap := make(map[string]storage.Author)
+	authorMap := make(map[string]*storage.Author)
 	for _, post := range posts {
 		author, exist := authorMap[post.Username]
 		if !exist {
-			userInfo, err := a.service.GetUserInfoByUsername(post.Username)
+			var err error
+			author, err = a.service.GetAuthorByUsername(post.Username)
 			if err == nil {
-				author = storage.Author{
-					Username: userInfo.Username,
-					FullName: userInfo.FullName,
-					Avatar:   userInfo.Avatar,
-				}
 				authorMap[post.Username] = author
 			}
 		}
 		postView := storage.PostView{
 			Post:   &post,
-			Author: &author,
+			Author: author,
 		}
 		postViews = append(postViews, postView)
 	}
-	postViews = a.service.HandleForPost(a.conf.SiteRoot, claims.UserName, postViews)
+	postViews = a.service.HandleForPostList(a.conf.SiteRoot, claims.UserName, postViews)
 	utils.ResponseOK(w, Map{
 		"posts": postViews,
 	})
@@ -99,27 +119,25 @@ func (a *apiUser) getTimelines(w http.ResponseWriter, r *http.Request) {
 		posts, _ = a.service.GetPostOfFollowing(claims.UserName)
 	}
 	postViews := make([]storage.PostView, 0)
-	authorMap := make(map[string]storage.Author)
+	authorMap := make(map[string]*storage.Author)
 	for _, post := range posts {
 		author, exist := authorMap[post.Username]
 		if !exist {
-			userInfo, err := a.service.GetUserInfoByUsername(post.Username)
+			var err error
+			author, err = a.service.GetAuthorByUsername(post.Username)
 			if err == nil {
-				author = storage.Author{
-					Username: userInfo.Username,
-					FullName: userInfo.FullName,
-					Avatar:   userInfo.Avatar,
-				}
 				authorMap[post.Username] = author
+			} else {
+				fmt.Println("check err: ", err)
 			}
 		}
 		postView := storage.PostView{
 			Post:   &post,
-			Author: &author,
+			Author: author,
 		}
 		postViews = append(postViews, postView)
 	}
-	postViews = a.service.HandleForPost(a.conf.SiteRoot, claims.UserName, postViews)
+	postViews = a.service.HandleForPostList(a.conf.SiteRoot, claims.UserName, postViews)
 	utils.ResponseOK(w, Map{
 		"posts": postViews,
 	})

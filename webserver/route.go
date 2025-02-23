@@ -56,6 +56,7 @@ func (s *WebServer) Route() {
 			r.Get("/get-user-by-name/{username}", userRouter.getUserByName)
 			r.Get("/get-timelines", userRouter.getTimelines)
 			r.Get("/get-all-posts", userRouter.getAllPosts)
+			r.Get("/get-post-detail/{id}", userRouter.getPostDetail)
 			r.Get("/get-user-posts/{username}", userRouter.getUserPosts)
 		})
 		r.Route("/file", func(r chi.Router) {
